@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO 콘솔 대시보드 사용 가이드</title>
+<style>
+  :root {
+    --blue: #1a73e8;
+    --blue-light: #e8f0fe;
+    --blue-dark: #1557b0;
+    --green: #1e8e3e;
+    --green-light: #e6f4ea;
+    --red: #d93025;
+    --red-light: #fce8e6;
+    --yellow: #f9ab00;
+    --yellow-light: #fef7e0;
+    --purple: #7627bb;
+    --purple-light: #f3e8fd;
+    --gray: #5f6368;
+    --gray-light: #f8f9fa;
+    --gray-border: #dadce0;
+    --text: #202124;
+    --text-sub: #5f6368;
+    --sidebar-w: 260px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: #fff;
+    line-height: 1.7;
+  }
+
+  /* ── 레이아웃 ── */
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── 사이드바 ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--gray-light);
+    border-right: 1px solid var(--gray-border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0 40px;
+  }
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--gray-border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 16px;
+  }
+  .sidebar-logo .logo-text { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .sidebar-logo .logo-sub { font-size: 11px; color: var(--text-sub); }
+
+  .nav-section { margin-bottom: 4px; }
+  .nav-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 12px 20px 4px;
+  }
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--text-sub);
+    text-decoration: none;
+    border-radius: 0 20px 20px 0;
+    margin-right: 8px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-link:hover { background: #e8eaed; color: var(--text); }
+  .nav-link.active { background: var(--blue-light); color: var(--blue); font-weight: 600; }
+  .nav-link .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  /* ── 메인 콘텐츠 ── */
+  .main {
+    flex: 1;
+    max-width: 900px;
+    padding: 48px 56px 80px;
+  }
+
+  /* ── 섹션 ── */
+  .section { margin-bottom: 60px; scroll-margin-top: 32px; }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  h1 .title-badge {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 10px;
+    letter-spacing: 0;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--blue);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 20px 0 10px;
+  }
+  p { margin-bottom: 12px; color: var(--text); line-height: 1.75; }
+  .subtitle { font-size: 15px; color: var(--text-sub); margin-bottom: 32px; }
+
+  /* ── 카드 ── */
+  .card {
+    background: #fff;
+    border: 1px solid var(--gray-border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .card-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+
+  .info-card { border-left: 4px solid var(--blue); background: var(--blue-light); }
+  .info-card.green { border-left-color: var(--green); background: var(--green-light); }
+  .info-card.yellow { border-left-color: var(--yellow); background: var(--yellow-light); }
+  .info-card.red { border-left-color: var(--red); background: var(--red-light); }
+  .info-card.purple { border-left-color: var(--purple); background: var(--purple-light); }
+
+  .kpi-card {
+    background: #fff;
+    border: 1px solid var(--gray-border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .kpi-label { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 22px; font-weight: 700; color: var(--blue); }
+  .kpi-sub { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+
+  /* ── 탭 카드 ── */
+  .tab-card {
+    border: 1px solid var(--gray-border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .tab-card-header {
+    background: var(--gray-light);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--gray-border);
+  }
+  .tab-card-header .tab-icon { font-size: 20px; }
+  .tab-card-header .tab-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .tab-card-header .tab-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--blue);
+    color: #fff;
+    margin-left: auto;
+  }
+  .tab-card-body { padding: 20px 24px; }
+
+  /* ── 기능 목록 ── */
+  .feature-list { list-style: none; }
+  .feature-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-border);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+  }
+  .feature-list li:last-child { border-bottom: none; }
+  .feature-list .feat-icon { font-size: 16px; min-width: 20px; margin-top: 1px; }
+  .feature-list .feat-label { font-weight: 600; color: var(--text); }
+  .feature-list .feat-desc { color: var(--text-sub); font-size: 13px; }
+
+  /* ── 배지 ── */
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-yellow { background: var(--yellow-light); color: #b06000; }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+  .badge-gray { background: #f1f3f4; color: var(--gray); }
+  .badge-new { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+  /* ── 용어 테이블 ── */
+  .term-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13.5px; }
+  .term-table th {
+    background: var(--gray-light);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    border-bottom: 2px solid var(--gray-border);
+  }
+  .term-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--gray-border);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  .term-table tr:last-child td { border-bottom: none; }
+  .term-table .term-key { font-weight: 700; color: var(--blue); white-space: nowrap; }
+
+  /* ── 증감 샘플 ── */
+  .delta-up { color: #d32f2f; font-weight: 600; }
+  .delta-dn { color: #1a73e8; font-weight: 600; }
+
+  /* ── 시나리오 카드 ── */
+  .scenario-card {
+    border: 1px solid var(--gray-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .scenario-header {
+    padding: 12px 18px;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .scenario-header.blue { background: var(--blue-light); color: var(--blue-dark); }
+  .scenario-header.green { background: var(--green-light); color: #1b5e20; }
+  .scenario-header.purple { background: var(--purple-light); color: #4a148c; }
+  .scenario-body { padding: 14px 18px; }
+  .scenario-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13.5px;
+  }
+  .step-num {
+    min-width: 22px; height: 22px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .scenario-header.green ~ .scenario-body .step-num { background: var(--green); }
+  .scenario-header.purple ~ .scenario-body .step-num { background: var(--purple); }
+
+  /* ── 인사이트 샘플 ── */
+  .insight-sample {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+  }
+  .insight-sample.warning { background: #fffbea; border-color: #fde68a; }
+  .insight-sample.danger { background: #fff5f5; border-color: #fecaca; }
+  .insight-sample.success { background: #f0fdf4; border-color: #86efac; }
+  .insight-sample.info { background: #eff6ff; border-color: #93c5fd; }
+  .insight-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+  .insight-desc { font-size: 13px; color: var(--text-sub); margin-bottom: 6px; }
+  .insight-action { font-size: 12px; background: rgba(0,0,0,0.05); border-radius: 6px; padding: 6px 10px; color: var(--text); }
+
+  /* ── FAQ ── */
+  .faq-item {
+    border: 1px solid var(--gray-border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .faq-q {
+    padding: 14px 18px;
+    font-weight: 700;
+    font-size: 13.5px;
+    background: var(--gray-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .faq-q .q-icon { color: var(--blue); font-size: 16px; font-weight: 900; }
+  .faq-a {
+    padding: 14px 18px;
+    font-size: 13.5px;
+    color: var(--text);
+    line-height: 1.75;
+    background: #fff;
+  }
+
+  /* ── 필터 UI 샘플 ── */
+  .filter-bar {
+    background: var(--gray-light);
+    border: 1px solid var(--gray-border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .filter-label { font-weight: 600; color: var(--text-sub); font-size: 12px; }
+  .filter-select {
+    padding: 5px 10px;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--text);
+  }
+  .btn-search {
+    padding: 6px 18px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ── 카테고리 배지 목록 ── */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .cat-item {
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* ── 구분선 ── */
+  hr { border: none; border-top: 1px solid var(--gray-border); margin: 32px 0; }
+
+  /* ── 하이라이트 박스 ── */
+  .highlight-box {
+    background: var(--blue-light);
+    border: 1px solid #c5d8fc;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .highlight-box .hb-icon { font-size: 20px; margin-top: 1px; }
+  .highlight-box .hb-content { flex: 1; }
+  .highlight-box .hb-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--blue-dark); }
+  .highlight-box .hb-desc { font-size: 13px; color: var(--text); line-height: 1.7; }
+
+  /* ── 반응형 ── */
+  @media (max-width: 860px) {
+    .sidebar { display: none; }
+    .main { padding: 32px 20px 60px; max-width: 100%; }
+    .card-grid, .card-grid-3 { grid-template-columns: 1fr; }
+    .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ─────────────── 사이드바 ─────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">📊</div>
+      <div>
+        <div class="logo-text">SEO 콘솔 대시보드</div>
+        <div class="logo-sub">사용 가이드 v1.0</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">시작하기</div>
+      <a class="nav-link active" href="#intro">
+        <span class="nav-icon">🏠</span> 대시보드 소개
+      </a>
+      <a class="nav-link" href="#access">
+        <span class="nav-icon">🔗</span> 접속 방법
+      </a>
+      <a class="nav-link" href="#filter">
+        <span class="nav-icon">🎛️</span> 공통 필터 사용법
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">탭별 기능 가이드</div>
+      <a class="nav-link" href="#tab-weekly">
+        <span class="nav-icon">📊</span> 주차별 요약
+      </a>
+      <a class="nav-link" href="#tab-keyword">
+        <span class="nav-icon">🔍</span> 검색어 Top 50
+      </a>
+      <a class="nav-link" href="#tab-page">
+        <span class="nav-icon">🔗</span> 페이지 Top 50
+      </a>
+      <a class="nav-link" href="#tab-domain">
+        <span class="nav-icon">🏢</span> 도메인 비교
+      </a>
+      <a class="nav-link" href="#tab-insight">
+        <span class="nav-icon">💡</span> 인사이트
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">활용 안내</div>
+      <a class="nav-link" href="#scenario">
+        <span class="nav-icon">🎯</span> 부서별 활용 시나리오
+      </a>
+      <a class="nav-link" href="#terms">
+        <span class="nav-icon">📖</span> 지표 용어 해설
+      </a>
+      <a class="nav-link" href="#faq">
+        <span class="nav-icon">❓</span> FAQ
+      </a>
+    </div>
+  </aside>
+
+  <!-- ─────────────── 메인 ─────────────── -->
+  <main class="main">
+
+    <!-- ══ 1. 대시보드 소개 ══ -->
+    <section class="section" id="intro">
+      <h1>SEO 콘솔 대시보드 <span class="title-badge">사용 가이드</span></h1>
+      <p class="subtitle">구글, 네이버 검색엔진 데이터를 기반으로 서비스별 검색 유입 현황을 한눈에 파악할 수 있는 자동화 대시보드입니다.</p>
+
+      <div class="card-grid-3">
+        <div class="kpi-card">
+          <div class="kpi-label">데이터 출처</div>
+          <div class="kpi-value" style="font-size:15px;">구글 & 네이버<br> 오가닉 검색 콘솔</div>
+          <div class="kpi-sub">Google Search Console, <br>Naver Search Advisor</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">업데이트 주기</div>
+          <div class="kpi-value" style="font-size:15px;">매주 화요일 13시</div>
+          <div class="kpi-sub">직전 주 월~일 데이터 자동 수집</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">수집 데이터</div>
+          <div class="kpi-value" style="font-size:15px;">도메인별 유입 상위 검색어,<br> 유입 상위 페이지</div>
+          <div class="kpi-sub">구글 상위 500개, 네이버 상위 30개 제공</div>
+        </div>
+      </div>
+
+      <h3>📌 이 대시보드로 무엇을 알 수 있나요?</h3>
+      <ul class="feature-list">
+        <li>
+          <span class="feat-icon">🔍</span>
+          <div>
+            <div class="feat-label">실제 유입 검색어 파악</div>
+            <div class="feat-desc">사용자가 구글/네이버에서 어떤 키워드로 우리 서비스에 들어오는지 확인 가능</div>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon">📄</span>
+          <div>
+            <div class="feat-label">실제 유입 페이지 확인</div>
+            <div class="feat-desc">사용자가 구글/네이버에서 어떤 페이지로 우리 서비스에 들어오는지 확인 가능</div>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon">📈</span>
+          <div>
+            <div class="feat-label">주차별 증감 추이 모니터링</div>
+            <div class="feat-desc">당기(이번 주)와 전기(지난 주) 비교로 클릭수·노출수·CTR 변화를 즉시 파악</div>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon">⭐</span>
+          <div>
+            <div class="feat-label">신규 유입 검색어 발굴</div>
+            <div class="feat-desc">이전 주에는 없었던 새로운 검색어를 NEW 배지로 표시, 유효할 경우 콘텐츠·신규 키워드 발굴에 활용</div>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon">🚨</span>
+          <div>
+            <div class="feat-label">이상 신호 자동 감지</div>
+            <div class="feat-desc">클릭 급감·CTR 하락·노출 증가-클릭 감소 등 주요 이슈를 인사이트 탭에서 자동으로 알림</div>
+          </div>
+        </li>
+      </ul>
+
+      <h3>📂 대상 서비스 (도메인)</h3>
+      <div class="card-grid">
+        <div class="card" style="padding:14px 18px;">
+          <div style="font-weight:700; margin-bottom:6px;">🛒 다나와</div>
+          <div style="font-size:13px; color:var(--text-sub);">www.danawa.com, m.danawa.com, prod.danawa.com, search.danawa.com, dpg.danawa.com</div>
+        </div>
+        <div class="card" style="padding:14px 18px;">
+          <div style="font-weight:700; margin-bottom:6px;">💰 에누리</div>
+          <div style="font-size:13px; color:var(--text-sub);">www.enuri.com, m.enuri.com</div>
+        </div>
+        <div class="card" style="padding:14px 18px;">
+          <div style="font-weight:700; margin-bottom:6px;">🖥️ 다나와 조립PC</div>
+          <div style="font-size:13px; color:var(--text-sub);">shop.danawa.com, mshop.danawa.com</div>
+        </div>
+        <div class="card" style="padding:14px 18px;">
+          <div style="font-weight:700; margin-bottom:6px;">🚗 다나와 자동차</div>
+          <div style="font-size:13px; color:var(--text-sub);">auto.danawa.com, mauto.danawa.com</div>
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ══ 2. 접속 방법 ══ -->
+    <section class="section" id="access">
+      <h2>🔗 접속 방법</h2>
+
+      <div class="highlight-box">
+        <span class="hb-icon">💡</span>
+        <div class="hb-content">
+          <div class="hb-title">대시보드 접속 URL</div>
+          <div class="hb-desc">
+            담당자에게 공유된 Google Apps Script 웹앱 URL로 접속하면 됩니다.<br>
+            별도 설치 없이 <strong>크롬 브라우저</strong>에서 바로 사용 가능합니다.
+          </div>
+        </div>
+      </div>
+
+      <h3>접속 후 초기 화면</h3>
+      <ul class="feature-list">
+        <li>
+          <span class="feat-icon">1️⃣</span>
+          <div>
+            <div class="feat-label">자동 로딩 시작</div>
+            <div class="feat-desc">접속 즉시 <strong>📊 주차별 요약</strong> 탭이 자동으로 로드됩니다 (약 10~30초 소요)</div>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon">2️⃣</span>
+          <div>
+            <div class="feat-label">필터 옵션 초기화</div>
+            <div class="feat-desc">상단의 도메인 선택·주차 선택 드롭다운이 자동으로 채워집니다</div>
+          </div>
+        </li>
+        <li>
+          <span class="feat-icon">3️⃣</span>
+          <div>
+            <div class="feat-label">원하는 탭 클릭</div>
+            <div class="feat-desc">필터를 설정한 뒤 원하는 탭을 선택하고 <strong>조회</strong> 버튼을 누르세요</div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="card info-card yellow" style="padding:14px 18px; margin-top:8px;">
+        ⚠️ <strong>권장 환경:</strong> Google Chrome 최신 버전 / 화면 너비 1280px 이상 (와이드 모니터 권장)
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ══ 3. 공통 필터 ══ -->
+    <section class="section" id="filter">
+      <h2>🎛️ 공통 필터 사용법</h2>
+      <p>검색어·페이지·도메인 비교·인사이트 탭은 아래 필터를 설정한 뒤 <strong>조회</strong> 버튼을 눌러야 데이터가 표시됩니다.</p>
+
+      <div class="filter-bar">
+        <div class="filter-item">
+          <span class="filter-label">도메인</span>
+          <select class="filter-select"><option>전체</option><option>www.danawa.com</option></select>
+        </div>
+        <div class="filter-item">
+          <span class="filter-label">주차</span>
+          <select class="filter-select"><option>2026-03-23</option></select>
+        </div>
+        <button class="btn-search">🔍 조회</button>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3 style="margin-top:0;">📌 도메인 선택</h3>
+          <ul class="feature-list">
+            <li><span class="feat-icon">•</span><div><span class="feat-label">전체</span> — 모든 도메인 합산 데이터</div></li>
+            <li><span class="feat-icon">•</span><div>특정 도메인 선택 시 해당 도메인만 필터링</div></li>
+            <li><span class="feat-icon">•</span><div>주차별 요약 탭은 도메인 필터 적용 없이 전체 데이터 표시</div></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0;">📅 주차 선택</h3>
+          <ul class="feature-list">
+            <li><span class="feat-icon">•</span><div>최근 <strong>20주</strong> 분량 제공 (최신 주 자동 선택)</div></li>
+            <li><span class="feat-icon">•</span><div>선택한 주차가 <strong>당기</strong>, 바로 전 주가 <strong>전기</strong>로 자동 설정</div></li>
+            <li><span class="feat-icon">•</span><div>기간 예시: <code style="background:#f1f3f4;padding:1px 5px;border-radius:3px;">2026-03-23 (03.23~03.29)</code></div></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <span class="hb-icon">ℹ️</span>
+        <div class="hb-content">
+          <div class="hb-title">📊 주차별 요약 탭은 필터 없이 자동 로드</div>
+          <div class="hb-desc">
+            주차별 요약 탭은 대시보드 접속 시 <strong>자동으로 전체 5주 데이터</strong>를 불러오며,
+            별도 필터 조작 없이 바로 확인할 수 있습니다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ══ 4. 탭별 기능 ══ -->
+
+    <!-- 탭 1: 주차별 요약 -->
+    <section class="section" id="tab-weekly">
+      <h2>📊 주차별 요약</h2>
+      <p>최근 5주간 서비스별 검색 유입 클릭수 추이를 차트로 확인합니다. 대시보드 접속 시 기본으로 표시되는 탭입니다.</p>
+
+      <div class="tab-card">
+        <div class="tab-card-header">
+          <span class="tab-icon">📊</span>
+          <span class="tab-title">주차별 요약 탭</span>
+          <span class="tab-badge">기본 탭 · 자동 로드</span>
+        </div>
+        <div class="tab-card-body">
+          <h3 style="margin-top:0;">📌 서비스별 서브탭</h3>
+          <p>상단의 서비스 탭을 클릭해 원하는 서비스의 데이터를 확인하세요.</p>
+          <div class="card-grid">
+            <div class="info-card card" style="padding:12px 16px;">
+              <div style="font-weight:700;">🛒 다나와</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">www, m, prod, search, dpg.danawa.com</div>
+            </div>
+            <div class="info-card green card" style="padding:12px 16px;">
+              <div style="font-weight:700;">💰 에누리</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">www, m.enuri.com</div>
+            </div>
+            <div class="info-card yellow card" style="padding:12px 16px;">
+              <div style="font-weight:700;">🖥️ 다나와 조립PC</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">shop, mshop.danawa.com</div>
+            </div>
+            <div class="info-card purple card" style="padding:12px 16px;">
+              <div style="font-weight:700;">🚗 다나와 자동차</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">auto, mauto.danawa.com</div>
+            </div>
+          </div>
+
+          <h3>📊 차트 구성</h3>
+          <ul class="feature-list">
+            <li>
+              <span class="feat-icon">📉</span>
+              <div>
+                <div class="feat-label">도메인별 클릭수 추이</div>
+                <div class="feat-desc">서브도메인별(www, m, prod 등) 주차별 클릭수를 누적 막대 차트로 표시 — 특정 도메인의 유입 변화를 시각적으로 파악</div>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">🗂️</span>
+              <div>
+                <div class="feat-label">카테고리별 클릭수 추이</div>
+                <div class="feat-desc">카테고리·상품상세·검색결과·커뮤니티 등 URL 유형별 주차별 클릭수 — 어떤 페이지 유형으로 유입이 집중되는지 파악</div>
+              </div>
+            </li>
+          </ul>
+
+          <div class="card info-card" style="padding:12px 16px; margin-top:8px;">
+            💡 <strong>활용 팁:</strong> 특정 주차에 클릭이 급감했다면 해당 서비스·카테고리에서 어떤 변화가 있었는지 <strong>검색어/페이지 Top 50 탭</strong>에서 상세 확인하세요.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 탭 2: 검색어 Top N -->
+    <section class="section" id="tab-keyword">
+      <h2>🔍 검색어 Top N</h2>
+      <p>선택한 도메인·주차 기준으로 클릭수 상위 검색어와 당기/전기 비교 데이터를 확인합니다.</p>
+
+      <div class="tab-card">
+        <div class="tab-card-header">
+          <span class="tab-icon">🔍</span>
+          <span class="tab-title">검색어 Top N 탭</span>
+        </div>
+        <div class="tab-card-body">
+          <h3 style="margin-top:0;">화면 구성</h3>
+          <ul class="feature-list">
+            <li>
+              <span class="feat-icon">#</span>
+              <div><div class="feat-label">순위</div><div class="feat-desc">당기 클릭수 기준 내림차순</div></div>
+            </li>
+            <li>
+              <span class="feat-icon">🔑</span>
+              <div>
+                <div class="feat-label">검색어 + <span class="badge badge-new">NEW</span></div>
+                <div class="feat-desc">전기(지난 주)에 없었던 신규 유입 검색어에는 NEW 배지가 표시됩니다. 구글은 스팸 키워드 제외 로직을 적용했습니다.</div>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">👆</span>
+              <div>
+                <div class="feat-label">클릭수 · 노출수 · CTR</div>
+                <div class="feat-desc">
+                  각 지표의 <strong>당기 / 전기 / 증감 / 증감률</strong> 4개 컬럼으로 표시<br>
+                  <span class="delta-up">▲ 빨강</span> = 증가 &nbsp;|&nbsp; <span class="delta-dn">▼ 파랑</span> = 감소
+                </div>
+              </div>
+            </li>
+          </ul>
+
+          <h3>예시</h3>
+          <div class="card" style="overflow-x:auto;">
+            <table class="term-table" style="margin:0; min-width:580px;">
+              <thead>
+                <tr>
+                  <th>#</th><th>검색어</th>
+                  <th>클릭(당기)</th><th>클릭(전기)</th><th>증감</th><th>증감률</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><strong>다나와</strong></td>
+                  <td>12,400</td><td>11,200</td>
+                  <td class="delta-up">▲ +1,200</td>
+                  <td class="delta-up">▲ +10.7%</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><strong>노트북 추천</strong> <span class="badge badge-new">NEW</span></td>
+                  <td>3,800</td><td>–</td>
+                  <td>–</td><td>–</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td><strong>가격비교</strong></td>
+                  <td>2,100</td><td>3,500</td>
+                  <td class="delta-dn">▼ -1,400</td>
+                  <td class="delta-dn">▼ -40.0%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card-grid" style="margin-top:14px;">
+            <div class="card info-card" style="padding:12px 16px;">
+              💡 <strong>콘텐츠 기획:</strong> 클릭 상위 검색어 + NEW 키워드를<br> 확인하여 콘텐츠 주제 발굴
+            </div>
+            <div class="card info-card red" style="padding:12px 16px;">
+              🚨 <strong>이슈 감지:</strong> 전주 대비 30% 이상 클릭 감소 키워드<br>→ 원인 점검 (순위 변화, T&D, 콘텐츠 변화 등)
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 탭 3: 페이지 Top N -->
+    <section class="section" id="tab-page">
+      <h2>🔗 페이지 Top N</h2>
+      <p>선택한 도메인·주차 기준으로 클릭수 상위 페이지(URL)와 당기/전기 비교 데이터를 확인합니다.</p>
+
+      <div class="tab-card">
+        <div class="tab-card-header">
+          <span class="tab-icon">🔗</span>
+          <span class="tab-title">페이지 Top N 탭</span>
+        </div>
+        <div class="tab-card-body">
+          <h3 style="margin-top:0;">화면 구성</h3>
+          <ul class="feature-list">
+            <li>
+              <span class="feat-icon">🔗</span>
+              <div>
+                <div class="feat-label">URL</div>
+                <div class="feat-desc">클릭 시 해당 페이지로 바로 이동 (외부 링크)</div>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">🏷️</span>
+              <div>
+                <div class="feat-label">카테고리 배지</div>
+                <div class="feat-desc">URL 패턴으로 자동 분류 — 어떤 유형의 페이지로 유입이 집중되는지 파악 가능</div>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">📊</span>
+              <div>
+                <div class="feat-label">클릭수 · 노출수 · CTR</div>
+                <div class="feat-desc">검색어 탭과 동일하게 당기/전기 비교 및 증감 표시</div>
+              </div>
+            </li>
+          </ul>
+
+          <h3>🏷️ URL 카테고리 분류 기준</h3>
+                <div class="feat-desc">이 외 URL은 기타로 분류 (홈메인, info, corp 등 페이지)</div>
+          <div class="cat-grid">
+            <div class="cat-item" style="background:#e3f2fd; color:#1565c0;">📂 카테고리<div style="font-size:10px;font-weight:400;margin-top:2px;">/list, /cpp</div></div>
+            <div class="cat-item" style="background:#f3e8fd; color:#6a1b9a;">📦 상품상세<div style="font-size:10px;font-weight:400;margin-top:2px;">/modelno, /pcode</div></div>
+            <div class="cat-item" style="background:#fff3e0; color:#e65100;">🔍 검색결과<div style="font-size:10px;font-weight:400;margin-top:2px;">/search</div></div>
+            <div class="cat-item" style="background:#e8f5e9; color:#2e7d32;">💬 커뮤니티<div style="font-size:10px;font-weight:400;margin-top:2px;">/dpg, /knowcom, /talk</div></div>
+            <div class="cat-item" style="background:#fce4ec; color:#880e4f;">🎉 기획전<div style="font-size:10px;font-weight:400;margin-top:2px;">/cmexhibition, /plan</div></div>
+            <div class="cat-item" style="background:#fff8e1; color:#f57f17;">🎊 이벤트<div style="font-size:10px;font-weight:400;margin-top:2px;">/event</div></div>
+            <div class="cat-item" style="background:#ede7f6; color:#283593;">🖥️ 샵다나와<div style="font-size:10px;font-weight:400;margin-top:2px;">/shopmain, /virtualestimate</div></div>
+            <div class="cat-item" style="background:#f1f8e9; color:#558b2f;">🚗 다나와자동차<div style="font-size:10px;font-weight:400;margin-top:2px;">/auto, /usedcar, /newcar</div></div>
+          </div>
+
+          <div class="card info-card" style="padding:12px 16px; margin-top:4px;">
+            💡 <strong>활용 팁:</strong> 카테고리 배지로 어떤 유형(상품상세 vs 검색결과 등)으로 유입이 집중되는지 파악해 <strong>내부 링크 강화·HTML 태그 보완·콘텐츠 개선</strong> 등 SEO 개선 우선순위 결정에 활용하세요.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 탭 4: 도메인 비교 -->
+    <section class="section" id="tab-domain">
+      <h2>🏢 도메인 비교</h2>
+      <p>도메인별 유입 요약과 URL 카테고리(유형)별 클릭수 비교 차트를 통해 해당 도메인의 당기/전기 성과를 요약 비교합니다.</p>
+
+      <div class="tab-card">
+        <div class="tab-card-header">
+          <span class="tab-icon">🏢</span>
+          <span class="tab-title">도메인 비교 탭</span>
+        </div>
+        <div class="tab-card-body">
+          <ul class="feature-list">
+            <li>
+              <span class="feat-icon">📊</span>
+              <div>
+                <div class="feat-label">도메인별 유입 요약 테이블</div>
+                <div class="feat-desc">클릭수·노출수·CTR 당기/전기 비교 — 도메인 토탈로 조회 시 어느 도메인이 성장/하락 중인지 한눈에 파악 가능</div>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">🗂️</span>
+              <div>
+                <div class="feat-label">URL 카테고리별 클릭수 테이블</div>
+                <div class="feat-desc">카테고리·상품상세·검색결과·커뮤니티 등 URL 유형별 당기/전기 클릭수와 WoW 표시</div>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">📉</span>
+              <div>
+                <div class="feat-label">카테고리별 클릭 비교 차트</div>
+                <div class="feat-desc">당기(파랑)·전기(회색) 묶음 막대 차트로 카테고리별 클릭 변화를 시각화</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 탭 5: 인사이트 -->
+    <section class="section" id="tab-insight">
+      <h2>💡 인사이트</h2>
+      <p>데이터를 자동 분석해 주목해야 할 이상 신호와 권장 액션을 카드 형태로 제공합니다. 별도 설정 없이 조회 버튼만 누르면 자동 생성됩니다.</p>
+
+      <div class="tab-card">
+        <div class="tab-card-header">
+          <span class="tab-icon">💡</span>
+          <span class="tab-title">인사이트 탭</span>
+          <span class="tab-badge">자동 분석</span>
+        </div>
+        <div class="tab-card-body">
+          <h3 style="margin-top:0;">🔔 감지되는 인사이트 유형</h3>
+
+          <div class="insight-sample warning">
+            <div class="insight-title">⚠️ 노출 증가 &amp; 클릭 감소</div>
+            <div class="insight-desc">노출은 늘었으나 클릭이 감소한 검색어 — 검색 순위는 있지만 제목/설명이 매력적이지 않거나 AI 오버뷰에 밀릴 가능성</div>
+            <div class="insight-action">💼 권장 액션: Meta 태그(title/description) 개선, 랜딩 페이지 점검</div>
+          </div>
+
+          <div class="insight-sample danger">
+            <div class="insight-title">📉 클릭 급감 검색어 발생</div>
+            <div class="insight-desc">전주 대비 클릭이 30% 이상 감소한 검색어 — 검색 순위 하락 또는 랜딩 페이지 품질 문제 가능성</div>
+            <div class="insight-action">💼 권장 액션: 해당 키워드 검색 순위 확인, 랜딩 페이지 품질 점검</div>
+          </div>
+
+          <div class="insight-sample success">
+            <div class="insight-title">⭐ 신규 키워드 유입 발생</div>
+            <div class="insight-desc">이번 주 처음 등장한 신규 검색어 — 새로운 콘텐츠 기회 또는 바이럴·시즈널 트렌드 포착</div>
+            <div class="insight-action">💼 권장 액션: 관련 콘텐츠·광고 검토, 트렌드성 키워드 여부 확인</div>
+          </div>
+
+          <div class="insight-sample danger">
+            <div class="insight-title">🔻 CTR 급락 페이지 발생</div>
+            <div class="insight-desc">클릭률(CTR)이 5%p 이상 하락한 페이지 — 검색 결과 표시 정보(title/snippet)가 사용자 의도와 맞지 않을 가능성</div>
+            <div class="insight-action">💼 권장 액션: Meta 태그 및 구조화 데이터 점검</div>
+          </div>
+
+          <div class="insight-sample success">
+            <div class="insight-title">🚀 유입 급증 페이지 발생</div>
+            <div class="insight-desc">전주 대비 클릭이 50% 이상 증가한 페이지 — 검색 순위 상승 또는 시즈널 트렌드 반응</div>
+            <div class="insight-action">💼 권장 액션: 관련 콘텐츠 확대, 내부 링크 강화로 지속 유입 유도</div>
+          </div>
+
+          <div class="insight-sample info">
+            <div class="insight-title">💪 노출 감소 &amp; 클릭 유지</div>
+            <div class="insight-desc">노출은 줄었지만 클릭은 유지되는 검색어 — CTR이 개선되고 있거나 검색량 자체가 줄어든 경우</div>
+            <div class="insight-action">💼 권장 액션: 검색량 변화 및 순위 점검, 콘텐츠 확충 검토</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ══ 5. 부서별 활용 시나리오 ══ -->
+    <section class="section" id="scenario">
+      <h2>🎯 부서별 활용 시나리오</h2>
+
+      <!-- 큐레이션본부 -->
+      <div class="scenario-card">
+        <div class="scenario-header blue">
+          <span>📂</span> 큐레이션본부 — 카테고리 정비 &amp; 콘텐츠 기획·보완
+        </div>
+        <div class="scenario-body">
+          <div class="scenario-step">
+            <div class="step-num">1</div>
+            <div><strong>검색어 Top 50</strong>에서 클릭 상위 키워드와 <span class="badge badge-new">NEW</span> 신규 유입 키워드 확인 →  <strong>카테고리 개편/정비·콘텐츠 기획 등 활용</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num">2</div>
+            <div><strong>페이지 Top 50</strong>에서 유입 상위 페이지 파악 → 해당 페이지·상품·구매가이드 <strong>본문 점검 및 보완 우선순위 결정</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num">3</div>
+            <div>클릭 많은 검색어 vs. 실제 상품 카테고리 매핑 확인 → <strong>카테고리명·태그 정비</strong> 및 대표 상품 노출 강화</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 서비스기획/모바일본부 -->
+      <div class="scenario-card">
+        <div class="scenario-header green">
+          <span>🛠️</span> 서비스기획/모바일본부 — 색인 점검 & 내부 링크 강화 &amp; HTML 태그 보완
+        </div>
+        <div class="scenario-body">
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--green);">1</div>
+            <div><strong>페이지 Top 50</strong>에서 클릭 상위 페이지 목록 확인 → <strong>오류 페이지 여부 점검 및 내부 링크 연결 강화</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--green);">2</div>
+            <div><strong>인사이트 탭</strong>의 📉 클릭 급감 / 🔻 CTR 급락 카드에서 문제 페이지 포착 → <strong>페이지 색인 및 HTML meta 태그 점검</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--green);">3</div>
+            <div>노출은 많으나 CTR이 낮은 페이지 → 검색 결과 <strong>스니펫 품질 개선 및 구조화 데이터 점검</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--green);">4</div>
+            <div><strong>도메인 비교</strong>에서 PC/모바일(www vs m) 도메인 간 성과 격차 확인 → <strong>모바일 페이지 최적화 우선순위 결정</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 마케팅 -->
+      <div class="scenario-card">
+        <div class="scenario-header purple">
+          <span>📣</span> 마케팅 — 광고 키워드 &amp; 콘텐츠 소재 발굴 & SEM 최적화
+        </div>
+        <div class="scenario-body">
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--purple);">1</div>
+            <div><strong>검색어 Top 50</strong>의 <span class="badge badge-new">NEW</span> 신규 키워드 → 트렌드성 여부 판단 후 <strong>검색 광고·블로그 콘텐츠 주제 발굴</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--purple);">2</div>
+            <div><strong>검색어 Top 50</strong>의 광고 집행 키워드  → <strong>검색 광고 단가·효율 점검 및 최적화 활용</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--purple);">3</div>
+            <div><strong>인사이트 탭</strong>의 🚀 유입 급증 페이지 → <strong>시즈널 트렌드 및 이슈 콘텐츠 포착</strong></div>
+          </div>
+          <div class="scenario-step">
+            <div class="step-num" style="background:var(--purple);">4</div>
+            <div><strong>주차별 요약</strong>으로 서비스별 클릭 추이 파악 → 성과 하락 서비스에 <strong>마케팅 지원 집중</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ══ 6. 지표 용어 해설 ══ -->
+    <section class="section" id="terms">
+      <h2>📖 지표 용어 해설</h2>
+
+      <table class="term-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">용어</th>
+            <th>설명</th>
+            <th style="width:180px;">활용 포인트</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="term-key">클릭수 (Clicks)</td>
+            <td>검색 결과에서 우리 페이지를 클릭한 횟수.<br> 실제 유입량을 나타내는 핵심 지표.</td>
+            <td>유입량 절대값 파악</td>
+          </tr>
+          <tr>
+            <td class="term-key">노출수 (Impressions)</td>
+            <td>검색 결과에 우리 페이지가 표시된 횟수.<br> 검색 순위가 높을수록, 검색량이 많을수록 증가.</td>
+            <td>잠재 도달 범위 파악</td>
+          </tr>
+          <tr>
+            <td class="term-key">CTR</td>
+            <td>클릭률 (Click-Through Rate). 노출수 대비 클릭수 비율.
+            <td>검색 결과 매력도 측정</td>
+          </tr>
+          <tr>
+            <td class="term-key">당기</td>
+            <td>필터에서 선택한 주차의 데이터. 기본값은 가장 최근 주차.</td>
+            <td>현재 성과 기준</td>
+          </tr>
+          <tr>
+            <td class="term-key">전기</td>
+            <td>당기 바로 직전 주차의 데이터. 자동으로 설정됨.</td>
+            <td>비교 기준</td>
+          </tr>
+          <tr>
+            <td class="term-key">WoW</td>
+            <td>전기 대비 당기 증감률.
+            <td>주간 성장률 파악</td>
+          </tr>
+          <tr>
+            <td class="term-key"><span class="badge badge-new">NEW</span></td>
+            <td>전기에는 Top N에 없었다가 당기에 새로 진입한 검색어.<br> 신규 트렌드나 새로운 유입 경로를 의미.</td>
+            <td>신규 유입 키워드 파악</td>
+          </tr>
+          <tr>
+            <td class="term-key"><span class="delta-up">▲ 빨강</span></td>
+            <td>전기 대비 수치 증가. 클릭수·노출수·CTR이 상승한 경우.</td>
+            <td>성과 개선 신호</td>
+          </tr>
+          <tr>
+            <td class="term-key"><span class="delta-dn">▼ 파랑</span></td>
+            <td>전기 대비 수치 감소. 클릭수·노출수·CTR이 하락한 경우.</td>
+            <td>이슈 점검 필요</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr>
+
+    <!-- ══ 7. FAQ ══ -->
+    <section class="section" id="faq">
+      <h2>❓ FAQ</h2>
+
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-icon">Q</span> 데이터는 얼마나 자주 업데이트되나요?</div>
+        <div class="faq-a">
+          <strong>매주 화요일 오전에 자동으로 직전 주(월~일) 데이터를 수집합니다.</strong><br>
+          예를 들어 4월 1일(화요일)에 접속하면 3월 23일(월)~3월 29일(일) 데이터가 최신입니다.<br>
+          구글 서치콘솔 특성상 최근 2~3일 데이터는 집계 지연이 있을 수 있어 매주 화요일에 업데이트 합니다.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-icon">Q</span> 주차별 요약이 느리게 로딩되는 이유가 있나요?</div>
+        <div class="faq-a">
+          주차별 요약 탭은 최근 5주치 전체 데이터를 한 번에 분석하므로 데이터 양에 따라 10~30초 소요될 수 있습니다.<br>
+          로딩 스피너가 표시되는 동안 기다려 주세요.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-icon">Q</span> 검색어 Top N에 서비스과 무관한 키워드가 집계되는 이유는?</div>
+        <div class="faq-a">
+          DPG, 쇼핑지식 등 커뮤니티 내 게시글을 통해 실제 노출/유입이 발생한 검색어이며, 특히 구글에서 두드러집니다.<br>
+          유해 검색어의 경우 스팸 키워드 제외 로직을 적용하여 주차별로 필터링 업데이트하고 있으나 일부 누락될 수 있습니다.<br> 
+          불필요한 검색어/페이지는 게시글 금칙어, 게시글 신고/삭제 등 작업을 통해 추가 관리 부탁 드립니다.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-icon">Q</span> CTR이 갑자기 낮아진 이유는 무엇인가요?</div>
+        <div class="faq-a">
+          CTR 하락의 주요 원인:<br>
+          ① 검색 결과 순위는 유지되나 Google AI 오버뷰(AI 답변)에 의해 클릭 유도 감소<br>
+          ② 검색 결과 title/description이 사용자 검색 의도와 불일치 (설정해둔 meta 태그와 무관한 내용을 크롤링하는 등)<br>
+          ③ 경쟁 사이트의 리치스니펫(별점·이미지 등) 등장으로 시선 분산<br>
+          <strong>인사이트 탭</strong>에서 CTR 급락 페이지를 확인하고 Meta 태그를 점검하세요.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-icon">Q</span> 특정 도메인 데이터가 조회되지 않아요.</div>
+        <div class="faq-a">
+          선택한 주차에 해당 도메인의 데이터가 수집되지 않았거나, 해당 기간에 유입이 없을 수 있습니다.<br>
+          수집에 문제가 있는 지 <strong>퍼포먼스마케팅팀</strong>에 문의해주세요.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-icon">Q</span> 인사이트에 아무 카드도 나오지 않아요.</div>
+        <div class="faq-a">
+          인사이트는 전기 데이터와 비교해 이상 신호를 감지합니다.<br>
+          전기 데이터가 충분하지 않거나(신규 키워드/페이지만 존재), 변화폭이 감지 임계값(예: 클릭 30% 이상 감소)에 미치지 않을 경우<br>
+          카드가 생성되지 않습니다. 이는 <strong>이번 주 데이터가 전반적으로 안정적이라는 긍정적 신호</strong>일 수 있습니다.
+        </div>
+      </div>
+
+         <hr>
+    <div style="text-align:center; color:var(--text-sub); font-size:12px; padding:20px 0 40px;">
+      구글 서치콘솔 연동 대시보드 사용 가이드 · 퍼포먼스마케팅팀 · 2026
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // 사이드바 네비게이션 활성 처리
+  const navLinks = document.querySelectorAll('.nav-link');
+  const sections = document.querySelectorAll('.section');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // 부드러운 스크롤
+  navLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>
