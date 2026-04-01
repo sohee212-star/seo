@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>구글 서치콘솔 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-size: 0.875rem; background: #f4f6f9; }
+
+  .dash-header {
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color: white; padding: 0.9rem 1.5rem;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .kpi-card { border: none; border-left: 4px solid #1a73e8; border-radius: 6px; }
+  .kpi-card .kpi-val  { font-size: 1.8rem; font-weight: 700; line-height: 1.1; }
+  .kpi-card .kpi-lbl  { font-size: 0.7rem; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
+  .kpi-card .kpi-sub  { font-size: 0.78rem; margin-top: 4px; }
+
+  .nav-tabs .nav-link { font-size: 0.85rem; color: #555; }
+  .nav-tabs .nav-link.active { font-weight: 600; color: #1a73e8; }
+  .tab-content { background: white; border: 1px solid #dee2e6; border-top: none;
+                 border-radius: 0 0 8px 8px; padding: 1.25rem; }
+
+  .table { font-size: 0.8rem; }
+  .table th  { background: #f8f9fa; white-space: nowrap; font-size: 0.75rem; }
+  .table td  { white-space: nowrap; vertical-align: middle; }
+
+  .th-val   { width: 72px;  min-width: 72px;  text-align: center; }
+  .th-delta { width: 78px;  min-width: 78px;  text-align: center; }
+  .th-rate  { width: 76px;  min-width: 76px;  text-align: center; }
+
+  .col-rank { width: 36px;  min-width: 36px;  text-align: center; }
+  .col-kw   { width: 220px; min-width: 250px; }   /* 검색어 열 */
+  .col-url  { width: 400px; min-width: 300px; }   /* URL 열 */
+  .col-cat  { width: 80px;  min-width: 80px;  text-align: center; }
+  .col-dom  { width: 150px; min-width: 200px; }   /* 도메인 열 */
+
+  .kw-cell {
+    max-width: 280px;                      /* 검색어 셀: 240 → 280px */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .url-cell {
+    max-width: 260px;                      /* URL 셀: 240+20 = 260px */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .up   { color: #ea4335; font-weight: 600; }
+  .dn   { color: #1a73e8; font-weight: 600; }
+  .new-badge  { background: #e3f2fd; color: #1565c0; font-size: 0.65rem; padding: 1px 5px; border-radius: 3px; }
+  .spam-badge { background: #fff8e1; color: #e65100; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; }
+
+  .cat-list   { background: #e3f2fd; color: #1565c0; }
+  .cat-prod   { background: #f3e5f5; color: #6a1b9a; }
+  .cat-search { background: #fff3e0; color: #e65100; }
+  .cat-comm   { background: #e8f5e9; color: #2e7d32; }
+  .cat-plan   { background: #fce4ec; color: #880e4f; }
+  .cat-event  { background: #ffe0b2; color: #bf360c; }
+  .cat-auto   { background: #e8eaf6; color: #283593; }
+  .cat-news   { background: #e0f2f1; color: #004d40; }
+  .cat-pc     { background: #f9fbe7; color: #558b2f; }
+  .cat-etc    { background: #f5f5f5; color: #616161; }
+  /* 주차별 요약 탭 서비스 서브 탭 */
+  #wkServiceTab .nav-link { font-size: 0.82rem; padding: 0.35rem 0.9rem; }
+  #wkServiceTab .nav-link.active { background: #1a73e8; color: #fff; }
+  .cat-badge  { font-size: 0.68rem; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+
+  .table thead th[colspan] { text-align: center; background: #f8f9fa; }
+  .table thead th[rowspan] { vertical-align: middle; }
+  .table thead tr:first-child th[colspan] { border-bottom: 1px solid #dee2e6; }
+  .table.table-sm td, .table.table-sm th { font-size: 0.78rem; }
+
+  .insight-card { border-left: 4px solid; border-radius: 6px; padding: 1rem; margin-bottom: 0.85rem; }
+  .insight-card.success { border-color: #28a745; background: #f0fff4; }
+  .insight-card.warning { border-color: #ffc107; background: #fffdf0; }
+  .insight-card.danger  { border-color: #dc3545; background: #fff5f5; }
+  .insight-card.info    { border-color: #17a2b8; background: #f0f9ff; }
+  .insight-card .sit    { font-weight: 700; font-size: 0.95rem; }
+  .insight-card .action { background: rgba(0,0,0,0.05); border-radius: 4px;
+                          padding: 0.5rem 0.75rem; margin-top: 0.5rem; font-size: 0.82rem; }
+  .insight-item-tag { display: inline-block; font-size: 0.72rem; padding: 2px 8px;
+                      border-radius: 10px; margin: 2px; background: rgba(0,0,0,0.07); }
+
+  .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.88);
+                     z-index: 9999; display: flex; flex-direction: column;
+                     align-items: center; justify-content: center; }
+  .loading-overlay .spinner-border { width: 3rem; height: 3rem; }
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner-border text-primary mb-3"></div>
+  <div id="loadingMsg" class="text-secondary fw-500">필터 옵션을 불러오는 중...</div>
+</div>
+
+<div class="dash-header d-flex flex-wrap align-items-center gap-2">
+  <div>
+    <div class="fw-bold" style="font-size:1rem">🔍 구글 서치콘솔 대시보드</div>
+    <div style="font-size:0.72rem;opacity:.75">매주 화요일 13시 최신 데이터 업데이트 (월~일) | 유지보수 문의 : 퍼포먼스마케팅팀</div>
+  </div>
+  <div class="ms-auto d-flex flex-wrap gap-2 align-items-center">
+    <select id="selDomain" class="form-select form-select-sm" style="min-width:160px">
+      <option value="전체">--도메인 선택--</option>
+    </select>
+    <select id="selWeek" class="form-select form-select-sm" style="min-width:145px">
+      <option value="">-- 주차 선택 --</option>
+    </select>
+    <button class="btn btn-light btn-sm px-3 fw-600" onclick="loadData()">조회</button>
+    <span id="lastUpdated" class="text-white-50" style="font-size:0.72rem"></span>
+  </div>
+</div>
+
+<div class="container-fluid px-3 py-3">
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="card kpi-card p-3 h-100" style="border-left-color:#1a73e8">
+        <div class="kpi-lbl">당기 총 클릭수</div>
+        <div class="kpi-val text-primary" id="kpiClk">—</div>
+        <div class="kpi-sub" id="kpiClkSub"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card kpi-card p-3 h-100" style="border-left-color:#34a853">
+        <div class="kpi-lbl">당기 총 노출수</div>
+        <div class="kpi-val" style="color:#34a853" id="kpiImp">—</div>
+        <div class="kpi-sub" id="kpiImpSub"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card kpi-card p-3 h-100" style="border-left-color:#fbbc04">
+        <div class="kpi-lbl">평균 CTR</div>
+        <div class="kpi-val" style="color:#e0a800" id="kpiCtr">—</div>
+        <div class="kpi-sub" id="kpiCtrSub"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card kpi-card p-3 h-100" style="border-left-color:#ea4335">
+        <div class="kpi-lbl">신규 진입 검색어 (Top 50 중)</div>
+        <div class="kpi-val" style="color:#ea4335" id="kpiKw">—</div>
+        <div class="kpi-sub" id="kpiKwSub"></div>
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs" id="mainTab" role="tablist">
+    <li class="nav-item"><button class="nav-link active" id="tab-weekly-btn" data-bs-toggle="tab" data-bs-target="#tabWeekly" type="button">📊 주차별 요약</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabKw">🔍 검색어 Top 50</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPage">🔗 페이지 Top 50</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabDomain">🏢 도메인 비교</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabInsight">💡 인사이트</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade" id="tabKw">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="fw-bold">검색어 Top 50</span>
+        <span class="spam-badge">✅ 스팸 키워드 자동 필터링 적용</span>
+        <span id="newKwBadge" class="ms-auto text-muted" style="font-size:0.78rem"></span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered table-sm mb-0" style="table-layout:fixed;min-width:1110px">
+          <thead>
+            <tr>
+              <th rowspan="2" class="col-rank">#</th>
+              <th rowspan="2" class="col-kw">검색어</th>
+              <th colspan="4">클릭수</th>
+              <th colspan="4">노출수</th>
+              <th colspan="4">CTR</th>
+            </tr>
+            <tr>
+              <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+              <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+              <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+            </tr>
+          </thead>
+          <tbody id="kwTbody">
+            <tr><td colspan="14" class="text-center text-muted py-5">도메인과 주차를 선택하고 [조회]를 클릭하세요.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tabPage">
+      <div class="fw-bold mb-2">페이지 Top 50</div>
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered table-sm mb-0" style="table-layout:fixed;min-width:1160px">
+          <thead>
+            <tr>
+              <th rowspan="2" class="col-rank">#</th>
+              <th rowspan="2" class="col-url">URL</th>
+              <th rowspan="2" class="col-cat">카테고리</th>
+              <th colspan="4">클릭수</th>
+              <th colspan="4">노출수</th>
+              <th colspan="4">CTR</th>
+            </tr>
+            <tr>
+              <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+              <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+              <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+            </tr>
+          </thead>
+          <tbody id="pageTbody">
+            <tr><td colspan="15" class="text-center text-muted py-5">도메인과 주차를 선택하고 [조회]를 클릭하세요.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tabDomain">
+      <div class="row g-3">
+        <div class="col-12 col-xl-7">
+          <div class="fw-bold mb-2">도메인별 유입 요약 (집계_페이지 기준)</div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm mb-3" style="table-layout:fixed;min-width:1130px">
+              <thead>
+                <tr>
+                  <th rowspan="2" class="col-dom">도메인</th>
+                  <th colspan="4">클릭수</th>
+                  <th colspan="4">노출수</th>
+                  <th colspan="4">CTR</th>
+                </tr>
+                <tr>
+                  <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+                  <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+                  <th class="th-val">당기</th><th class="th-val">전기</th><th class="th-delta">증감분</th><th class="th-rate">증감률</th>
+                </tr>
+              </thead>
+              <tbody id="domainTbody">
+                <tr><td colspan="13" class="text-center text-muted py-3">데이터 없음</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="fw-bold mb-2">URL 카테고리별 클릭수</div>
+          <div class="table-responsive">
+            <table id="catTable" class="table table-bordered table-sm mb-0">
+              <thead id="catThead">
+                <tr><th>카테고리</th></tr>
+              </thead>
+              <tbody id="catTbody">
+                <tr><td class="text-center text-muted py-3">데이터 없음</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-12 col-xl-5">
+          <div class="fw-bold mb-2">카테고리별 클릭수 비교 차트</div>
+          <canvas id="domainChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade show active" id="tabWeekly">
+      <p class="text-muted mb-3" style="font-size:0.82rem">
+        ※ 구글 서치어드바이저 인기 페이지 TOP 500 기준 (RAW_페이지)
+      </p>
+
+      <ul class="nav nav-pills mb-3 gap-1" id="wkServiceTab" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#wkSec-danawa">다나와</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#wkSec-enuri">에누리</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#wkSec-shoppc">다나와 조립PC</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#wkSec-auto">다나와 자동차</button></li>
+      </ul>
+
+      <div class="tab-content" id="wkServiceContent">
+        <div class="tab-pane fade show active" id="wkSec-danawa">
+          <div class="row g-4">
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">도메인별 클릭수 추이</div><canvas id="wkDom-danawa" height="220"></canvas></div>
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">카테고리별 클릭수 추이</div><canvas id="wkCat-danawa" height="220"></canvas></div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="wkSec-enuri">
+          <div class="row g-4">
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">도메인별 클릭수 추이</div><canvas id="wkDom-enuri" height="220"></canvas></div>
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">카테고리별 클릭수 추이</div><canvas id="wkCat-enuri" height="220"></canvas></div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="wkSec-shoppc">
+          <div class="row g-4">
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">도메인별 클릭수 추이</div><canvas id="wkDom-shoppc" height="220"></canvas></div>
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">카테고리별 클릭수 추이</div><canvas id="wkCat-shoppc" height="220"></canvas></div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="wkSec-auto">
+          <div class="row g-4">
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">도메인별 클릭수 추이</div><canvas id="wkDom-auto" height="220"></canvas></div>
+            <div class="col-12 col-xl-6"><div class="fw-bold mb-2" style="font-size:0.85rem">카테고리별 클릭수 추이</div><canvas id="wkCat-auto" height="220"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="wkLoading" class="text-center text-muted py-5">데이터 로딩 중...</div>
+      <div id="wkEmpty"   class="text-center text-muted py-5" style="display:none">RAW_페이지 데이터가 없습니다.</div>
+    </div>
+
+    <div class="tab-pane fade" id="tabInsight">
+      <div class="fw-bold mb-3">💡 자동 텍스트 인사이트</div>
+      <div id="insightContainer">
+        <div class="text-center text-muted py-5">조회 버튼을 눌러 인사이트를 생성하세요.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let _chart    = null;
+let _weekData = [];
+
+window.onload = function() {
+  google.script.run
+    .withSuccessHandler(initFilters)
+    .withFailureHandler(err => { hideLoading(); alert('필터 로드 실패: ' + err.message); })
+    .getFilterOptions();
+
+  // 주차별 요약 자동 로드 (필터와 독립)
+  google.script.run
+    .withSuccessHandler(function(raw) {
+      document.getElementById('wkLoading').style.display = 'none';
+      const result = JSON.parse(raw);
+      if (!result.ok || !result.weeks || result.weeks.length === 0) {
+        document.getElementById('wkEmpty').style.display = '';
+        return;
+      }
+      renderWeeklySummary(result);
+    })
+    .withFailureHandler(function() {
+      document.getElementById('wkLoading').style.display = 'none';
+      document.getElementById('wkEmpty').style.display = '';
+    })
+    .getWeeklySummary();
+};
+
+function initFilters(json) {
+  const data = JSON.parse(json);
+  if (!data.ok) { hideLoading(); alert('오류: ' + data.error); return; }
+
+  const domSel = document.getElementById('selDomain');
+  data.domains.forEach(d => {
+    if (d !== '전체') domSel.insertAdjacentHTML('beforeend',
+      '<option value="' + esc(d) + '">' + esc(d) + '</option>');
+  });
+
+  _weekData = data.weeks;
+  const wkSel = document.getElementById('selWeek');
+  data.weeks.forEach((w, i) => {
+    wkSel.insertAdjacentHTML('beforeend',
+      '<option value="' + i + '">' + esc(w.cur) + ' (주)</option>');
+  });
+
+  hideLoading();
+}
+
+function loadData() {
+  const domain   = document.getElementById('selDomain').value;
+  const weekIdx  = document.getElementById('selWeek').value;
+  if (weekIdx === '') { alert('주차를 선택하세요.'); return; }
+
+  const weekObj  = _weekData[parseInt(weekIdx, 10)] || {};
+  const curStart = weekObj.cur || '';
+  const prvStart = weekObj.prv || null;
+  if (!curStart) { alert('주차 정보가 올바르지 않습니다.'); return; }
+
+  showLoading('데이터 분석 중... (RAW 데이터가 많을 경우 30초 내외 소요)');
+
+  google.script.run
+    .withSuccessHandler(renderAll)
+    .withFailureHandler(err => { hideLoading(); alert('데이터 로드 실패: ' + err.message); })
+    .getDashboardData(JSON.stringify({ domain, curStart, prvStart }));
+}
+
+function renderAll(json) {
+  const data = JSON.parse(json);
+  if (!data.ok) { hideLoading(); alert('오류: ' + data.error); return; }
+
+  const { keywords, pages, aggPage, insights, curStart, prvStart, kwCount } = data;
+
+  renderKPI(keywords, aggPage, kwCount);
+  renderKwTable(keywords);
+  renderPageTable(pages);
+  renderDomainTab(aggPage);
+  renderInsights(insights, curStart, prvStart);
+
+  document.getElementById('lastUpdated').textContent = '당기: ' + curStart + ' ~ (7일)';
+  hideLoading();
+}
+
+function renderKPI(keywords, aggPage, kwCount) {
+  // 총 클릭/노출: RAW_페이지 기반 domainSummary 합산 (도메인 비교 탭과 동일 소스)
+  const ds     = (aggPage && aggPage.domainSummary) || [];
+  const totClk = ds.reduce((s, d) => s + _toNumJS(d.curClk), 0);
+  const prvClk = ds.reduce((s, d) => s + _toNumJS(d.prvClk), 0);
+  const totImp = ds.reduce((s, d) => s + _toNumJS(d.curImp), 0);
+  const prvImp = ds.reduce((s, d) => s + _toNumJS(d.prvImp), 0);
+  const avgCtr = totImp > 0 ? totClk / totImp * 100 : 0;
+  const prvCtr = prvImp > 0 ? prvClk / prvImp * 100 : 0;
+
+  const newCnt = keywords.filter(k => k.isNew).length;
+
+  document.getElementById('kpiClk').textContent = fmtN(totClk);
+  document.getElementById('kpiImp').textContent = fmtN(totImp);
+  document.getElementById('kpiCtr').textContent = fmtP(avgCtr) + '%';
+  document.getElementById('kpiKw').textContent  = newCnt + '개';
+
+  const clkDelta = totClk - prvClk;
+  const clkRate  = prvClk > 0 ? clkDelta / prvClk * 100 : null;
+  document.getElementById('kpiClkSub').innerHTML = clkRate !== null
+    ? deltaSpan(clkDelta, clkRate, '클릭') : '<span class="text-muted">전기 데이터 없음</span>';
+
+  const impDelta = totImp - prvImp;
+  const impRate  = prvImp > 0 ? impDelta / prvImp * 100 : null;
+  document.getElementById('kpiImpSub').innerHTML = impRate !== null
+    ? deltaSpan(impDelta, impRate, '노출') : '';
+
+  document.getElementById('kpiCtrSub').innerHTML = prvCtr > 0
+    ? '전기 ' + fmtP(prvCtr) + '% (' + (avgCtr >= prvCtr ? '<span class="up">▲' : '<span class="dn">▼') +
+      ' ' + fmtP(Math.abs(avgCtr - prvCtr)) + '%p</span>)' : '';
+
+  document.getElementById('kpiKwSub').innerHTML = '스팸 키워드 제외';
+}
+
+function renderKwTable(keywords) {
+  const tbody = document.getElementById('kwTbody');
+  const newCnt = keywords.filter(k => k.isNew).length;
+  document.getElementById('newKwBadge').textContent = 'NEW 키워드: ' + newCnt + '개';
+
+  if (!keywords.length) {
+    tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-5">해당 도메인/주차 데이터 없음</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = keywords.map(k => {
+    return '<tr>' +
+      '<td class="text-center text-muted">' + k.rank + '</td>' +
+      '<td class="kw-cell" title="' + esc(k.kw) + '">' + esc(k.kw) + (k.isNew ? ' <span class="new-badge">NEW</span>' : '') + '</td>' +
+      '<td class="text-end fw-bold">'        + fmtN(k.curClk)           + '</td>' +
+      '<td class="text-end text-muted">'     + fmtN(k.prvClk)           + '</td>' +
+      '<td class="text-center">'             + deltaSpanN(k.clkDelta)   + '</td>' +
+      '<td class="text-center">'             + rateSpan(k.clkRate)      + '</td>' +
+      '<td class="text-end">'                + fmtN(k.curImp)           + '</td>' +
+      '<td class="text-end text-muted">'     + fmtN(k.prvImp)           + '</td>' +
+      '<td class="text-center">'             + deltaSpanN(k.impDelta)   + '</td>' +
+      '<td class="text-center">'             + rateSpan(k.impRate)      + '</td>' +
+      '<td class="text-end">'                + fmtP(k.curCtr) + '%'     + '</td>' +
+      '<td class="text-end text-muted">'     + fmtP(k.prvCtr) + '%'     + '</td>' +
+      '<td class="text-center">'             + ctrDeltaSpan(k.ctrDelta) + '</td>' +
+      '<td class="text-center">'             + ctrRateSpan(k.curCtr, k.prvCtr, k.ctrDelta) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function renderPageTable(pages) {
+  const tbody = document.getElementById('pageTbody');
+  if (!pages.length) {
+    tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-5">해당 도메인/주차 데이터 없음</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = pages.map(p => {
+    const path = p.url.replace(/https?:\/\/[^/]+/, '') || '/';
+    return '<tr>' +
+      '<td class="text-center text-muted">' + p.rank + '</td>' +
+      '<td class="url-cell" title="' + esc(p.url) + '">' +
+        '<a href="' + esc(p.url) + '" target="_blank" class="text-decoration-none text-dark">' + esc(path) + '</a>' +
+        (p.isNew ? ' <span class="new-badge">NEW</span>' : '') +
+      '</td>' +
+      '<td class="text-center">' + catBadge(p.cat) + '</td>' +
+      '<td class="text-end fw-bold">'        + fmtN(p.curClk)           + '</td>' +
+      '<td class="text-end text-muted">'     + fmtN(p.prvClk)           + '</td>' +
+      '<td class="text-center">'             + deltaSpanN(p.clkDelta)   + '</td>' +
+      '<td class="text-center">'             + rateSpan(p.clkRate)      + '</td>' +
+      '<td class="text-end">'                + fmtN(p.curImp)           + '</td>' +
+      '<td class="text-end text-muted">'     + fmtN(p.prvImp)           + '</td>' +
+      '<td class="text-center">'             + deltaSpanN(p.impDelta)   + '</td>' +
+      '<td class="text-center">'             + rateSpan(p.impRate)      + '</td>' +
+      '<td class="text-end">'                + fmtP(p.curCtr) + '%'     + '</td>' +
+      '<td class="text-end text-muted">'     + fmtP(p.prvCtr) + '%'     + '</td>' +
+      '<td class="text-center">'             + ctrDeltaSpan(p.ctrDelta) + '</td>' +
+      '<td class="text-center">'             + ctrRateSpan(p.curCtr, p.prvCtr, p.ctrDelta) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function renderDomainTab(aggPage) {
+  const { domainSummary, categoryData } = aggPage;
+
+  const dTbody = document.getElementById('domainTbody');
+  if (!domainSummary.length) {
+    dTbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-3">집계_페이지 데이터 없음</td></tr>';
+  } else {
+    dTbody.innerHTML = domainSummary.map(d => {
+      const curCtr = normCtr(d.curCtr);
+      const prvCtr = normCtr(d.prvCtr);
+      return '<tr>' +
+        '<td>' + esc(d.domain) + '</td>' +
+        '<td class="text-end fw-bold">'    + fmtN(d.curClk)                          + '</td>' +
+        '<td class="text-end text-muted">' + fmtN(d.prvClk)                          + '</td>' +
+        '<td class="text-center">'         + deltaSpanN(d.clkDelta)                  + '</td>' +
+        '<td class="text-center">'         + rateSpan(normRate(d.clkRate))            + '</td>' +
+        '<td class="text-end">'            + fmtN(d.curImp)                          + '</td>' +
+        '<td class="text-end text-muted">' + fmtN(d.prvImp)                          + '</td>' +
+        '<td class="text-center">'         + deltaSpanN(d.impDelta)                  + '</td>' +
+        '<td class="text-center">'         + rateSpan(normRate(d.impRate))            + '</td>' +
+        '<td class="text-end">'            + fmtP(curCtr) + '%'                      + '</td>' +
+        '<td class="text-end text-muted">' + fmtP(prvCtr) + '%'                      + '</td>' +
+        '<td class="text-center">'         + ctrDeltaSpan(d.ctrDelta)                + '</td>' +
+        '<td class="text-center">'         + ctrRateSpan(curCtr, prvCtr, d.ctrDelta) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  const cThead = document.getElementById('catThead');
+  const cTbody = document.getElementById('catTbody');
+  if (!categoryData.length) {
+    cThead.innerHTML = '<tr><th>카테고리</th><th>당기</th><th>전기</th><th>WoW</th></tr>';
+    cTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">데이터 없음</td></tr>';
+  } else {
+    const catSumMap = {};
+    categoryData.forEach(c => {
+      Object.entries(c.cats || {}).forEach(([cat, vObj]) => {
+        if (!catSumMap[cat]) catSumMap[cat] = { cur: 0, prv: 0 };
+        catSumMap[cat].cur += _toNumJS(typeof vObj === 'object' ? vObj.cur : vObj);
+        catSumMap[cat].prv += _toNumJS(typeof vObj === 'object' ? vObj.prv : 0);
+      });
+    });
+    const allCats = Object.keys(catSumMap).sort((a, b) => catSumMap[b].cur - catSumMap[a].cur);
+
+    cThead.innerHTML =
+      '<tr>' +
+      '<th>카테고리</th>' +
+      '<th class="text-end">당기</th>' +
+      '<th class="text-end">전기</th>' +
+      '<th class="text-end">WoW</th>' +
+      '</tr>';
+
+    const grandCur = allCats.reduce((s, c) => s + catSumMap[c].cur, 0);
+    const grandPrv = allCats.reduce((s, c) => s + catSumMap[c].prv, 0);
+
+    const bodyRows = allCats.map(cat => {
+      const { cur, prv } = catSumMap[cat];
+      const wow     = prv > 0 ? (cur - prv) / prv * 100 : null;
+      const wowHtml = wow === null
+        ? '<span class="text-muted">—</span>'
+        : '<span class="' + (wow >= 0 ? 'up' : 'dn') + '">' +
+          (wow >= 0 ? '▲ +' : '▼ ') + Math.abs(wow).toFixed(1) + '%</span>';
+      return '<tr>' +
+        '<td>' + catBadge(cat) + '</td>' +
+        '<td class="text-end fw-bold">' + fmtN(cur) + '</td>' +
+        '<td class="text-end text-muted">' + fmtN(prv) + '</td>' +
+        '<td class="text-end">' + wowHtml + '</td>' +
+        '</tr>';
+    });
+
+    const grandWow     = grandPrv > 0 ? (grandCur - grandPrv) / grandPrv * 100 : null;
+    const grandWowHtml = grandWow === null
+      ? '<span class="text-muted">—</span>'
+      : '<span class="' + (grandWow >= 0 ? 'up' : 'dn') + '">' +
+        (grandWow >= 0 ? '▲ +' : '▼ ') + Math.abs(grandWow).toFixed(1) + '%</span>';
+    const totRow = '<tr class="table-light fw-bold">' +
+      '<td>합계</td>' +
+      '<td class="text-end">' + fmtN(grandCur) + '</td>' +
+      '<td class="text-end text-muted">' + fmtN(grandPrv) + '</td>' +
+      '<td class="text-end">' + grandWowHtml + '</td>' +
+      '</tr>';
+
+    cTbody.innerHTML = bodyRows.join('') + totRow;
+  }
+
+  if (_chart) { _chart.destroy(); _chart = null; }
+  if (categoryData.length > 0) {
+    const chartSumMap = {};
+    categoryData.forEach(c => {
+      Object.entries(c.cats || {}).forEach(([cat, vObj]) => {
+        if (!chartSumMap[cat]) chartSumMap[cat] = { cur: 0, prv: 0 };
+        chartSumMap[cat].cur += _toNumJS(typeof vObj === 'object' ? vObj.cur : vObj);
+        chartSumMap[cat].prv += _toNumJS(typeof vObj === 'object' ? vObj.prv : 0);
+      });
+    });
+    const chartCats = Object.keys(chartSumMap).sort((a, b) => chartSumMap[b].cur - chartSumMap[a].cur);
+    const curData   = chartCats.map(c => chartSumMap[c].cur);
+    const prvData   = chartCats.map(c => chartSumMap[c].prv);
+
+    _chart = new Chart(document.getElementById('domainChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: chartCats,
+        datasets: [
+          { label: '당기', data: curData, backgroundColor: '#1a73e8cc', borderRadius: 3, borderSkipped: false },
+          { label: '전기', data: prvData, backgroundColor: '#bdbdbdcc', borderRadius: 3, borderSkipped: false },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('ko-KR') + '회' } },
+        },
+        scales: {
+          x: { ticks: { font: { size: 10 }, color: '#333', maxRotation: 45 } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+        },
+      },
+    });
+  }
+}
+
+// ── 주차별 요약 탭 ───────────────────────────────────────
+const PALETTE = [
+  '#4285f4','#ea4335','#fbbc04','#34a853','#9c27b0','#ff9800',
+  '#00bcd4','#795548','#607d8b','#e91e63','#03a9f4','#8bc34a'
+];
+const _wkCharts = {};
+
+function renderWeeklySummary(result) {
+  const weeks      = result.weeks || [];
+  const weekStarts = weeks.map(w => w.start);
+  const weekLabels = weeks.map(w => w.label);
+  const data       = result.data || {};
+
+  const SECTION_MAP = [
+    { key: '다나와', safeId: 'danawa' },
+    { key: '에누리', safeId: 'enuri'  },
+    { key: '조립PC', safeId: 'shoppc' },
+    { key: '자동차', safeId: 'auto'   },
+  ];
+
+  SECTION_MAP.forEach(sec => {
+    const sData  = data[sec.key] || {};
+    const domMap = {}, catMap = {};
+
+    weekStarts.forEach(w => {
+      const wd = sData[w] || {};
+      Object.keys(wd.domains || {}).forEach(dom => {
+        if (!domMap[dom]) domMap[dom] = {};
+        domMap[dom][w] = (domMap[dom][w] || 0) + (wd.domains[dom] || 0);
+      });
+      Object.keys(wd.cats || {}).forEach(cat => {
+        if (!catMap[cat]) catMap[cat] = {};
+        catMap[cat][w] = (catMap[cat][w] || 0) + (wd.cats[cat] || 0);
+      });
+    });
+
+    buildStackedChart('wkDom-' + sec.safeId, weekLabels, weekStarts, domMap);
+    buildStackedChart('wkCat-' + sec.safeId, weekLabels, weekStarts, catMap);
+  });
+}
+
+function buildStackedChart(canvasId, weekLabels, weekStarts, itemByWeek) {
+  if (_wkCharts[canvasId]) { _wkCharts[canvasId].destroy(); delete _wkCharts[canvasId]; }
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const items = Object.keys(itemByWeek).sort((a, b) => {
+    const sa = weekStarts.reduce((s, w) => s + (itemByWeek[a][w] || 0), 0);
+    const sb = weekStarts.reduce((s, w) => s + (itemByWeek[b][w] || 0), 0);
+    return sb - sa;
+  });
+
+  const datasets = items.map((item, idx) => ({
+    label: item,
+    data: weekStarts.map(w => itemByWeek[item][w] || 0),
+    backgroundColor: PALETTE[idx % PALETTE.length],
+    borderWidth: 0,
+  }));
+
+  let maxStacked = 0;
+  weekStarts.forEach(w => {
+    const sum = items.reduce((s, item) => s + (itemByWeek[item][w] || 0), 0);
+    if (sum > maxStacked) maxStacked = sum;
+  });
+  const yMax = maxStacked > 0 ? Math.ceil(maxStacked * 1.2) : undefined;
+
+  _wkCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels: weekLabels, datasets },
+    options: {
+      responsive: true,
+      scales: {
+        x: { stacked: true, ticks: { font: { size: 10 }, color: '#333' } },
+        y: {
+          stacked: true, beginAtZero: true, max: yMax,
+          ticks: { font: { size: 10 }, callback: v => v.toLocaleString('ko-KR') }
+        },
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12, padding: 8 } },
+        tooltip: {
+          mode: 'index',
+          callbacks: {
+            label: ctx => ctx.parsed.y === 0 ? null :
+              ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('ko-KR') + '회'
+          }
+        },
+      },
+    },
+  });
+}
+
+function renderInsights(insights, curStart, prvStart) {
+  const container = document.getElementById('insightContainer');
+
+  if (!insights.length) {
+    container.innerHTML = '<div class="text-center text-muted py-5">이번 주차 특이사항이 감지되지 않았습니다.</div>';
+    return;
+  }
+
+  const periodBar = '<div class="alert alert-light border mb-3" style="font-size:0.8rem">' +
+    '📅 당기: <strong>' + curStart + '</strong>&nbsp;&nbsp;|&nbsp;&nbsp;' +
+    '전기: <strong>' + prvStart + '</strong></div>';
+
+  const cards = insights.map(ins => {
+    const itemsHtml = (ins.items && ins.items.length)
+      ? '<div class="mt-2">' +
+          ins.items.map(item => {
+            const deltaStr = item.clkDelta !== undefined
+              ? ' (' + (item.clkDelta >= 0 ? '+' : '') + fmtN(item.clkDelta) + '클릭)'
+              : item.curClk !== undefined ? ' (' + fmtN(item.curClk) + '클릭)' : '';
+            return '<span class="insight-item-tag">' + esc(item.label) + deltaStr + '</span>';
+          }).join('') + '</div>'
+      : '';
+
+    return '<div class="insight-card ' + ins.type + '">' +
+      '<div class="sit">' + ins.icon + ' ' + esc(ins.situation) + '</div>' +
+      '<p class="mt-2 mb-1">' + esc(ins.insight) + '</p>' +
+      '<div class="action">💼 <strong>권장 액션</strong>: ' + esc(ins.action) + '</div>' +
+      itemsHtml + '</div>';
+  }).join('');
+
+  container.innerHTML = periodBar + cards;
+}
+
+function fmtN(n)  { return Math.round(n).toLocaleString('ko-KR'); }
+function fmtP(v)  { return parseFloat(v).toFixed(2); }
+function _toNumJS(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+
+function rateSpan(v) {
+  if (v === null || v === undefined) return '<span class="new-badge">NEW</span>';
+  const cls  = v >= 0 ? 'up' : 'dn';
+  const sign = v >= 0 ? '+' : '';
+  return '<span class="' + cls + '">' + sign + parseFloat(v).toFixed(1) + '%</span>';
+}
+
+function deltaSpanN(v) {
+  if (v === null || v === undefined) return '<span class="text-muted">—</span>';
+  const cls  = v >= 0 ? 'up' : 'dn';
+  const sign = v >= 0 ? '▲ +' : '▼ ';
+  return '<span class="' + cls + '">' + sign + fmtN(Math.abs(v)) + '</span>';
+}
+
+function ctrDeltaSpan(v) {
+  if (v === null || v === undefined || v === 0) return '<span class="text-muted">—</span>';
+  const cls  = v >= 0 ? 'up' : 'dn';
+  const sign = v >= 0 ? '▲ +' : '▼ ';
+  return '<span class="' + cls + '">' + sign + Math.abs(parseFloat(v)).toFixed(2) + '%p</span>';
+}
+
+function ctrRateSpan(cur, prv, delta) {
+  if (!prv || prv <= 0) return '<span class="text-muted">—</span>';
+  return rateSpan(delta / prv * 100);
+}
+
+function deltaSpan(delta, rate, label) {
+  const cls  = delta >= 0 ? 'up' : 'dn';
+  const sign = delta >= 0 ? '▲ +' : '▼ ';
+  return '<span class="' + cls + '">' + sign + fmtN(Math.abs(delta)) + ' ' + label +
+    ' (' + (delta >= 0 ? '+' : '') + parseFloat(rate).toFixed(1) + '%)</span>';
+}
+
+function normRate(v) {
+  const n = parseFloat(v) || 0;
+  return Math.abs(n) <= 1 ? n * 100 : n;
+}
+
+function normCtr(v) {
+  const n = parseFloat(v) || 0;
+  return Math.abs(n) <= 1 ? n * 100 : n;
+}
+
+const _CAT_CLASS = {
+  '카테고리':    'cat-list',
+  '상품상세':    'cat-prod',
+  '검색결과':    'cat-search',
+  '커뮤니티':    'cat-comm',
+  '기획전':      'cat-plan',
+  '이벤트':      'cat-event',
+  '렌트리스':    'cat-auto',
+  '신차':        'cat-auto',
+  '중고차':      'cat-auto',
+  '자동차 백과': 'cat-auto',
+  '뉴스':        'cat-news',
+  'PC견적':      'cat-pc',
+  '조립PC':      'cat-pc',
+  '중고PC':      'cat-pc',
+  '표준PC':      'cat-pc',
+  '역경매':      'cat-pc',
+  '샵컴':        'cat-pc',
+  '지역센터':    'cat-pc',
+};
+function catBadge(cat) {
+  const label = (cat || '기타').trim();
+  const cls   = _CAT_CLASS[label] || 'cat-etc';
+  return '<span class="cat-badge ' + cls + '">' + esc(label) + '</span>';
+}
+
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showLoading(msg) {
+  document.getElementById('loadingMsg').textContent = msg || '로딩 중...';
+  document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+</script>
+</body>
+</html>
